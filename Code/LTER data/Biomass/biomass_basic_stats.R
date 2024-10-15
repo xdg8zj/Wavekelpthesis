@@ -3,6 +3,7 @@ rm(list = ls())
 library(dplyr)
 library(lubridate)
 library(tidyr)
+library(glue)
 
 #read in wave raw data
 setwd("/Users/aleynaloughran-pierce/Desktop")
@@ -103,9 +104,66 @@ wave_data <- read.csv("./Wavekelpthesis/Edited_data/mod_wave_subset.csv")
 wave_data <- wave_data[,c("site", "Max_Hs_m", "wave_yr")]
 
 #merge wave data and biomass by "site" and "year/wave year" columns
-biomass_comparison_all <- merge(x = wave_data, y = biomass_avgs2, by.y = c("YEAR","SITE"), by.x = c("wave_yr","site"))
+biomass_comparison_all <- merge(y = biomass_avgs2, x = wave_data, by.y = c("SITE","YEAR"), by.x = c("site", "wave_yr"))
+
 #verify reason why biomass_comparison_all is 50 obs less is because of channel island data deletions
 not_in_merged_df <- biomass_avgs2 %>% filter(!SITE %in% biomass_comparison_all$site)
+
+#convert to numeric data
+for(rcounter in 2:dim(biomass_comparison_all)[2])
+{
+  biomass_comparison_all[[rcounter]] <- as.numeric(biomass_comparison_all[[rcounter]])
+}
+
+#convert all Nans to NAs
+for(i in 1:dim(biomass_comparison_all)[1]){
+  for(j in 4:dim(biomass_comparison_all)[2])
+  {
+    if(is.nan(biomass_comparison_all[i,j]) == TRUE)
+    {
+      biomass_comparison_all[i,j] <- NA
+    } else {
+      next
+    }
+  }
+}
+
+biomass_comparison_all <- biomass_comparison_all %>% filter(is.na(`MOBILE INVERT`) %in% biomass_comparison_all$`MOBILE INVERT`)
+
+#subset by functional groups
+mobile_invert = biomass_comparison_all[,c("site","wave_yr","MOBILE INVERT","Max_Hs_m")]
+epi_sessile_invert = biomass_comparison_all[,c("site","wave_yr","EPILITHIC SESSILE INVERT","Max_Hs_m")]
+endo_sessile_invert = biomass_comparison_all[,c("site","wave_yr","ENDOLITHIC SESSILE INVERT","Max_Hs_m")]
+understory_algae = biomass_comparison_all[,c("site","wave_yr","UNDERSTORY ALGAE","Max_Hs_m")]
+giant_kelp = biomass_comparison_all[,c("site","wave_yr","GIANT KELP","Max_Hs_m")]
+fish = biomass_comparison_all[,c("site","wave_yr","FISH","Max_Hs_m")]
+
+
+pdf(file = "./Wavekelpthesis/Code/LTER data/Biomass/10-14-24_biomass_simplelm.pdf", paper = "us")
+#simple linear regressions
+lr_func <- function(biomass_subset){
+  biomass_subset_lin_reg <- lm(data= biomass_subset,formula = biomass_subset[,3]~biomass_subset$Max_Hs_m)
+  biomass_subset_lin_reg_plot <- plot(y= biomass_subset[,3],x=biomass_subset$Max_Hs_m,type="p", xlab = "Max wave height (m)", ylab = "biomass per site/year (g)", main =  glue("Max winter wave height vs \n{colnames(biomass_subset[3])} biomass"))
+  biomass_subset_prt_intercept <- coef(summary(biomass_subset_lin_reg))[1,'t value']
+  biomass_subset_prt_waves <- coef(summary(biomass_subset_lin_reg))[2,'t value']
+  biomass_subset_rsquared <- summary(biomass_subset_lin_reg)$r.squared
+  biomass_subset_fvalue <- summary(biomass_subset_lin_reg)$fstatistic[1]
+  biomass_subset_pvalue <- pf(summary(biomass_subset_lin_reg)$fstatistic[1],summary(biomass_subset_lin_reg)$fstatistic[2],summary(biomass_subset_lin_reg)$fstatistic[3],lower.tail = FALSE)
+  abline(biomass_subset_lin_reg$coefficients[1],biomass_subset_lin_reg$coefficients[2], col = "red")
+  text(x = 4.9, y = max(biomass_subset[3])-(max(biomass_subset[3])*0.2), label = glue("Pr(>|t|) = {round(biomass_subset_prt_intercept,digits = 6)} (intercept) \nPr(>|t|) = {round(biomass_subset_prt_waves,digits = 6)} (waves) \nr-squared = {round(biomass_subset_rsquared,digits = 6)} \nF-value = {round(biomass_subset_fvalue,digits = 6)} \np-value = {round(biomass_subset_pvalue,digits = 6)}"), cex = 0.5, pos = 2)
+  return(biomass_subset_lin_reg_plot)
+}
+
+lr_func(mobile_invert)
+lr_func(epi_sessile_invert)
+lr_func(endo_sessile_invert)
+lr_func(understory_algae)
+lr_func(giant_kelp)
+lr_func(fish)
+
+dev.off()
+
+
 
 
 
