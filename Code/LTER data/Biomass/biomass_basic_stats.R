@@ -163,6 +163,10 @@ lr_func(fish)
 
 dev.off()
 
+#GLMMTMB
+
+
+
 
 
 
