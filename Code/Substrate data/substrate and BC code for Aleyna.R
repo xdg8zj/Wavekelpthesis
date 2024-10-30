@@ -2,6 +2,7 @@
 # calculate rock cover for each transect
 # the remaining cover is sand, such that: 100 - rock = sand
 
+
 rock_tran <- substrate %>% 
   group_by(SITE, DATE, TRANSECT) %>% 
   filter(SUBSTRATE_TYPE == 'B' | SUBSTRATE_TYPE == 'BL' | SUBSTRATE_TYPE == 'BM' | SUBSTRATE_TYPE == 'BS' | SUBSTRATE_TYPE == 'C'| SUBSTRATE_TYPE == 'SS' | SUBSTRATE_TYPE == 'SH') %>% 

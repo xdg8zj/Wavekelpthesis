@@ -3,6 +3,7 @@ rm(list = ls())
 library(dplyr)
 library(lubridate)
 library(tidyr)
+library(glmmTMB)
 
 #read in wave raw data
 setwd("/Users/aleynaloughran-pierce/Desktop")
@@ -128,6 +129,7 @@ wave_data <- wave_data[,c("site", "Max_Hs_m", "wave_yr")]
 #merge wave data and percent_cover by "site" and "year/wave year" columns
 percent_cover_comparison_all <- merge(y = percent_cover_avgs2, x = wave_data, by.y = c("SITE","YEAR"), by.x = c("site", "wave_yr"))
 
+
 #verify reason why percent_cover_comparison_all is 50 obs less is because of channel island data deletions
 not_in_merged_df <- percent_cover_avgs2 %>% filter(!SITE %in% percent_cover_comparison_all$site)
 
@@ -190,3 +192,8 @@ lr_func(giant_kelp)
 lr_func(sessile_plant)
 
 dev.off()
+
+mobile_invert_rocksite_pc <- merge(x = mobile_invert, y = rock_site_avgs_1, by.y = c("SITE","YEAR"), by.x =  c("site","wave_yr"))
+year.factor <- (mobile_invert_rocksite_pc$wave_yr)
+
+mobile_invert_glmmTMB <- glmmTMB(biomass_glmmtmb_transavg$`MOBILE INVERT`~biomass_glmmtmb_transavg$Max_Hs_m + (1|mobile_invert_rocksite_pc$wave_yr) + (1|mobile_invert_rocksite_pc$PERCENT_ROCK_COVER)+ ar1(year.factor+0|mobile_invert_rocksite_pc$site),family = beta)
