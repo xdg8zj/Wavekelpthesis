@@ -1,3 +1,4 @@
+
 # Package ID: knb-lter-sbc.50.17 Cataloging System:https://pasta.edirepository.org.
 # Data set title: SBC LTER: Reef: Annual time series of biomass for kelp forest species, ongoing since 2000.
 # Data set creator:  Daniel C Reed -  
@@ -133,47 +134,48 @@ dt1$TAXON_CLASS <- as.factor(ifelse((trimws(as.character(dt1$TAXON_CLASS))==trim
 dt1$TAXON_ORDER <- as.factor(ifelse((trimws(as.character(dt1$TAXON_ORDER))==trimws("-99999")),NA,as.character(dt1$TAXON_ORDER)))
 dt1$TAXON_FAMILY <- as.factor(ifelse((trimws(as.character(dt1$TAXON_FAMILY))==trimws("-99999")),NA,as.character(dt1$TAXON_FAMILY)))
 
-bm_site <- dt1 %>% dplyr:: select(YEAR, SITE, TRANSECT, AFDM, SCIENTIFIC_NAME, COARSE_GROUPING) %>% dplyr::group_by(YEAR, SITE, TRANSECT, COARSE_GROUPING)  %>% dplyr:: summarise(AFDM = mean(AFDM, na.rm = TRUE)) %>% ungroup() %>% dplyr:: group_by(YEAR, SITE, COARSE_GROUPING) %>% dplyr::summarise(AFDM = mean(AFDM, NA.rm = TRUE)) %>% ungroup()
+# dt1_na = dt1[is.na(dt1$AFDM),]
+# bm_site <- dt1 %>% filter(!AFDM %in% dt1_na$AFDM)
+
+bm_site <- dt1 %>% dplyr::select(YEAR, SITE, TRANSECT, AFDM, SCIENTIFIC_NAME, COARSE_GROUPING) %>% dplyr::group_by(YEAR, SITE, TRANSECT, COARSE_GROUPING)  %>% dplyr::summarise(AFDM = sum(AFDM, na.rm = TRUE)) %>% ungroup() %>% dplyr::group_by(YEAR, SITE, TRANSECT, COARSE_GROUPING) %>% dplyr:: summarise(AFDM = mean(AFDM, na.rm = TRUE))  %>% ungroup() %>% dplyr:: group_by(YEAR, SITE, COARSE_GROUPING) %>% dplyr::summarise(AFDM = mean(AFDM, na.rm = TRUE)) %>% ungroup()
 bm_site <- bm_site %>% mutate(AFDM = AFDM + 0.0001)
 bm_site <- as.data.frame(bm_site) 
 
-# for(i in 1:dim(bm_site)[1]){
-#   for(j in 4:dim(bm_site)[2])
-#   {
-#     if(is.nan(bm_site[i,j]) == TRUE)
-#     {
-#       bm_site[i,j] <- NA
-#     } else {
-#       next
-#     }
-#   }
-# }
-
-bm_site2 <- bm_site %>%
-  pivot_wider(names_from = COARSE_GROUPING, values_from = AFDM)
+bm_site2 <- bm_site %>%pivot_wider(names_from = COARSE_GROUPING, values_from = AFDM)
 
 wave_data <- read.csv("./Wavekelpthesis/Edited_data/mod_wave_subset.csv")
 wave_data <- wave_data[,c("site", "Max_Hs_m", "wave_yr")]
-wave_data <- wave_data %>% rename(SITE = site, MAX_HS_M = Max_Hs_m, WAVE_YR = wave_yr)
+wave_data$WAVE_YR <- wave_data$wave_yr
+wave_data <- wave_data %>% rename(SITE = site, MAX_HS_M = Max_Hs_m)
+if (class(wave_data$SITE)!="factor") wave_data$SITE<- as.factor(wave_data$SITE)
+wave_data$MAX_HS_M <- as.numeric(wave_data$MAX_HS_M)
+# if (class(wave_data$MAX_HS_M)!="factor") wave_data$MAX_HS_M<- as.numeric(levels(wave_data$MAX_HS_M))[as.integer(wave_data$MAX_HS_M) ]       
+wave_data <- wave_data[,c("SITE", "MAX_HS_M", "WAVE_YR")]
+wave_data <- as.data.frame(wave_data)
 
-bm_wave_merge <- left_join(wave_data, bm_site2, by = c("WAVE_YR" = "YEAR", "SITE" = "SITE"))
+
+bm_wave_merge <- left_join(bm_site2, wave_data, by = c("YEAR" = "WAVE_YR", "SITE" = "SITE"))
 # bm_wave_merge <- merge(y = bm_site2, x = wave_data, by.y = c("SITE","YEAR"), by.x = c("SITE", "WAVE_YR"), all = TRUE)
 
-not_in_merged_df <- bm_site2 %>% filter(!SITE %in% bm_wave_merge$site)
 
-bm_wave_sand <- merge(x = bm_wave_merge, y = sand_site, by.x = c("SITE", "WAVE_YR"), by.y = c("SITE", "YEAR") )
+bm_wave_merge <- bm_wave_merge %>% filter(!SITE %in% c('SCDI', 'SCTW'))
+bm_wave_merge <- bm_wave_merge %>% rename(WAVE_YR = YEAR)
+not_in_merged_df <- bm_site2 %>% filter(!SITE %in% bm_wave_merge$SITE)
 
-mobile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `MOBILE INVERT`, MAX_HS_M, SAND_total )
-epi_sessile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `EPILITHIC SESSILE INVERT`, MAX_HS_M, SAND_total )
-endo_sessile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR,`ENDOLITHIC SESSILE INVERT`, MAX_HS_M, SAND_total )
-understory_algae <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `UNDERSTORY ALGAE`, MAX_HS_M, SAND_total )
-giant_kelp <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `GIANT KELP`, MAX_HS_M, SAND_total )
-fish <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `FISH`, MAX_HS_M, SAND_total )
+bm_wave_sand <- left_join(bm_wave_merge, sand_site, by = c("WAVE_YR" = "YEAR", "SITE" = "SITE"))
+not_in_merged_sand <- bm_wave_merge %>% filter(!SITE %in% bm_wave_sand$SITE)
 
-pdf(file = "./Wavekelpthesis/Code/LTER data/Biomass/11-06-24_biomasssite_simplelm.pdf", paper = "us")
+mobile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `MOBILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+epi_sessile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `EPILITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+endo_sessile_invert <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR,`ENDOLITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL,SAND_SS )
+understory_algae <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `UNDERSTORY ALGAE`, MAX_HS_M, SAND_TOTAL,SAND_SS )
+giant_kelp <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `GIANT KELP`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+fish <- bm_wave_sand %>% dplyr::select(SITE, WAVE_YR, `FISH`, MAX_HS_M, SAND_TOTAL,SAND_SS )
+
+pdf(file = "./Wavekelpthesis/Code/LTER data/Biomass/11-14-24_biomasssite_simplelm.pdf", paper = "us")
 lr_func <- function(biomass_subset){
   biomass_subset_lin_reg <- lm(data= biomass_subset,formula = biomass_subset[,3]~biomass_subset$MAX_HS_M)
-  biomass_subset_lin_reg_plot <- plot(y= biomass_subset[,3],x=biomass_subset$MAX_HS_M,type="p", xlab = "Max wave height (m)", ylab = "biomass per site/year (g)", main =  glue("Max winter wave height vs \n{colnames(biomass_subset[4])} biomass"))
+  biomass_subset_lin_reg_plot <- plot(y= biomass_subset[,3],x=biomass_subset$MAX_HS_M,type="p", xlab = "Max wave height (m)", ylab = "biomass per site/year (g)", main =  glue("Max winter wave height vs \n{colnames(biomass_subset[3])} biomass SITE"))
   biomass_subset_prt_intercept <- coef(summary(biomass_subset_lin_reg))[1,'t value']
   biomass_subset_prt_waves <- coef(summary(biomass_subset_lin_reg))[2,'t value']
   biomass_subset_rsquared <- summary(biomass_subset_lin_reg)$r.squared
@@ -193,21 +195,48 @@ lr_func(fish)
 
 dev.off()
 
-mobile_invert_glmmTMB <- glmmTMB(mobile_invert$`MOBILE INVERT`~mobile_invert$MAX_HS_M + (1|mobile_invert$WAVE_YR) + (1|mobile_invert$SAND_total)+ ar1(as.factor(mobile_invert$WAVE_YR)+0|mobile_invert$SITE),family = Gamma(link = "log") )
+sink("./Wavekelpthesis/Code/LTER data/Biomass/11-17-24_biomasssite_glmmtmb.txt")
+
+mobile_invert_glmmTMB <- glmmTMB(mobile_invert$`MOBILE INVERT`~mobile_invert$MAX_HS_M+mobile_invert$SAND_TOTAL+ ar1(as.factor(mobile_invert$WAVE_YR)+0|mobile_invert$SITE),family = Gamma(link = "log"), data = mobile_invert)
 print(summary(mobile_invert_glmmTMB))
 
-epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M + (1|epi_sessile_invert$WAVE_YR) + (1|epi_sessile_invert$SAND_total)+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log") )
+epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M  + epi_sessile_invert$SAND_TOTAL+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert )
 print(summary(epi_sessile_invert_glmmTMB))
 
-endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M + (1|endo_sessile_invert$WAVE_YR) + (1|endo_sessile_invert$SAND_total)+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log") )
+endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M + endo_sessile_invert$SAND_TOTAL+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"), data = endo_sessile_invert )
 print(summary(endo_sessile_invert_glmmTMB))
 
-understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M + (1|understory_algae$WAVE_YR) + (1|understory_algae$SAND_total)+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log") )
+understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M + understory_algae$SAND_TOTAL+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"), data = understory_algae)
 print(summary(understory_algae_glmmTMB))
 
-giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M + (1|giant_kelp$WAVE_YR) + (1|giant_kelp$SAND_total)+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log") )
+giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M + giant_kelp$SAND_TOTAL+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"), data = giant_kelp )
 print(summary(giant_kelp_glmmTMB))
 
-fish_glmmTMB <- glmmTMB(fish$`FISH`~fish$MAX_HS_M + (1|fish$WAVE_YR) + (1|fish$SAND_total)+ ar1(as.factor(fish$WAVE_YR)+0|fish$SITE),family = Gamma(link = "log") )
+fish_glmmTMB <- glmmTMB(fish$`FISH`~fish$MAX_HS_M + fish$SAND_TOTAL+ ar1(as.factor(fish$WAVE_YR)+0|fish$SITE),family = Gamma(link = "log"), data = fish )
 print(summary(fish_glmmTMB))
+
+sink()
+
+#sand + shallow sand
+sink("./Wavekelpthesis/Code/LTER data/Biomass/11-17-24_biomasssite_glmmtmb_ss.txt")
+mobile_invert_glmmTMB <- glmmTMB(mobile_invert$`MOBILE INVERT`~mobile_invert$MAX_HS_M+mobile_invert$SAND_SS+ ar1(as.factor(mobile_invert$WAVE_YR)+0|mobile_invert$SITE),family = Gamma(link = "log"), data = mobile_invert)
+print(summary(mobile_invert_glmmTMB))
+
+epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M  + epi_sessile_invert$SAND_SS+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert )
+print(summary(epi_sessile_invert_glmmTMB))
+
+endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M + endo_sessile_invert$SAND_SS+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"), data = endo_sessile_invert )
+print(summary(endo_sessile_invert_glmmTMB))
+
+understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M + understory_algae$SAND_SS+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"), data = understory_algae)
+print(summary(understory_algae_glmmTMB))
+
+giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M + giant_kelp$SAND_SS+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"), data = giant_kelp )
+print(summary(giant_kelp_glmmTMB))
+
+fish_glmmTMB <- glmmTMB(fish$`FISH`~fish$MAX_HS_M + fish$SAND_SS+ ar1(as.factor(fish$WAVE_YR)+0|fish$SITE),family = Gamma(link = "log"), data = fish )
+print(summary(fish_glmmTMB))
+
+sink()
+
 

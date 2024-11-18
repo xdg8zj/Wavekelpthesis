@@ -5,7 +5,7 @@ library(lubridate)
 library(tidyr)
 library(glue)
 library(glmmTMB)
-setwd("/Users/aleynaloughran-pierce/Desktop")
+
 # Package ID: knb-lter-sbc.15.35 Cataloging System:https://pasta.edirepository.org.
 # Data set title: SBC LTER: Reef: Kelp Forest Community Dynamics: Cover of sessile organisms, Uniform Point Contact.
 # Data set creator:  Daniel C Reed -  
@@ -51,8 +51,6 @@ unlink(infile1)
 dt1$COARSE_GROUPING <- paste(dt1$MOBILITY,dt1$GROUP)
 dt1$QUAD_SIDE <- paste(dt1$QUAD, dt1$SIDE)
 
-
-
 for(animal in 1:length(dt1$SCIENTIFIC_NAME))
 {
   if(dt1$SCIENTIFIC_NAME[animal] == "Parapholas californica" | dt1$SCIENTIFIC_NAME[animal] == "Chaceia ovoidea" )
@@ -85,7 +83,6 @@ for(animal in 1:length(dt1$COARSE_GROUPING))
     dt1$COARSE_GROUPING[animal] <- "UNDERSTORY ALGAE"
   }
 }
-
 
 # Fix any interval or ratio columns mistakenly read in as nominal and nominal columns read as numeric or dates read as strings
 
@@ -141,12 +138,11 @@ dt1$MOBILITY <- as.factor(ifelse((trimws(as.character(dt1$MOBILITY))==trimws("-9
 dt1$GROWTH_MORPH <- as.factor(ifelse((trimws(as.character(dt1$GROWTH_MORPH))==trimws("-99999")),NA,as.character(dt1$GROWTH_MORPH)))
 dt1$QUAD_SIDE <- as.factor(ifelse((trimws(as.character(dt1$QUAD_SIDE))==trimws("-99999 -99999")),NA,as.character(dt1$QUAD_SIDE)))
 
- pc_trans <- dt1 %>% dplyr:: select(YEAR, SITE, TRANSECT, QUAD_SIDE, PERCENT_COVER, SCIENTIFIC_NAME, COARSE_GROUPING) %>% dplyr::group_by(YEAR, SITE, TRANSECT, QUAD_SIDE, COARSE_GROUPING) %>% dplyr:: summarise(PERCENT_COVER = sum(PERCENT_COVER, na.rm = TRUE)) %>% ungroup() %>% dplyr:: group_by(YEAR, SITE, TRANSECT, COARSE_GROUPING) %>% dplyr:: summarise(PERCENT_COVER = mean(PERCENT_COVER, na.rm = TRUE)) %>% ungroup()
- pc_trans <- pc_trans %>% mutate(PERCENT_COVER = PERCENT_COVER + 0.0001)
-pc_trans <- as.data.frame(pc_trans) 
+pc_site <- dt1 %>% dplyr:: select(YEAR, SITE, TRANSECT, QUAD_SIDE, PERCENT_COVER, SCIENTIFIC_NAME, COARSE_GROUPING) %>% dplyr::group_by(YEAR, SITE, TRANSECT, QUAD_SIDE, COARSE_GROUPING) %>% dplyr:: summarise(PERCENT_COVER = sum(PERCENT_COVER, na.rm = TRUE)) %>% ungroup() %>% dplyr:: group_by(YEAR, SITE, TRANSECT, COARSE_GROUPING) %>% dplyr:: summarise(PERCENT_COVER = mean(PERCENT_COVER, na.rm = TRUE)) %>% ungroup() %>% dplyr:: group_by(YEAR, SITE, COARSE_GROUPING) %>% dplyr:: summarise(PERCENT_COVER = mean(PERCENT_COVER, na.rm = TRUE)) %>% ungroup()
+pc_site <- pc_site %>% mutate(PERCENT_COVER= PERCENT_COVER + 0.0001)
+pc_site <- as.data.frame(pc_site) 
 
-
-pc_trans2 <- pc_trans %>%
+pc_site2 <- pc_site %>%
   pivot_wider(names_from = COARSE_GROUPING, values_from = PERCENT_COVER)
 
 wave_data <- read.csv("./Wavekelpthesis/Edited_data/mod_wave_subset.csv")
@@ -155,81 +151,78 @@ wave_data$WAVE_YR <- wave_data$wave_yr
 wave_data <- wave_data %>% rename(SITE = site, MAX_HS_M = Max_Hs_m)
 if (class(wave_data$SITE)!="factor") wave_data$SITE<- as.factor(wave_data$SITE)
 wave_data$MAX_HS_M <- as.numeric(wave_data$MAX_HS_M)
-# if (class(wave_data$MAX_HS_M)!="factor") wave_data$MAX_HS_M<- as.numeric(levels(wave_data$MAX_HS_M))[as.integer(wave_data$MAX_HS_M) ]       
 wave_data <- wave_data[,c("SITE", "MAX_HS_M", "WAVE_YR")]
 wave_data <- as.data.frame(wave_data)
 
-pc_wave_merge <- left_join(pc_trans2, wave_data, by = c("YEAR" = "WAVE_YR", "SITE" = "SITE"))
+
+pc_wave_merge <- left_join(pc_site2, wave_data, by = c("YEAR" = "WAVE_YR", "SITE" = "SITE"))
 # bm_wave_merge <- merge(y = bm_site2, x = wave_data, by.y = c("SITE","YEAR"), by.x = c("SITE", "WAVE_YR"), all = TRUE)
+
+not_in_merged_df <- pc_site2 %>% filter(!SITE %in% pc_wave_merge$SITE)
+
+#ask!!
+
 pc_wave_merge <- pc_wave_merge %>% filter(!SITE %in% c('SCDI', 'SCTW'))
 pc_wave_merge <- pc_wave_merge %>% rename(WAVE_YR = YEAR)
-not_in_merged_df <- pc_trans2 %>% filter(!SITE %in% pc_wave_merge$SITE)
 
- 
+pc_wave_sand <- left_join(pc_wave_merge, sand_site, by = c("WAVE_YR" = "YEAR", "SITE" = "SITE"))
+not_in_merged_sand <- pc_wave_merge %>% filter(!SITE %in% pc_wave_sand$SITE)
 
-# pc_wave_sand <- merge(x = pc_wave_merge, y = sand_tran, by.x = c("SITE", "WAVE_YR", "TRANSECT"), by.y = c("SITE", "YEAR", "TRANSECT") )
+epi_sessile_invert <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, `EPILITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+endo_sessile_invert <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR,`ENDOLITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+understory_algae <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, `UNDERSTORY ALGAE`, MAX_HS_M, SAND_TOTAL, SAND_SS )
+giant_kelp <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, `GIANT KELP`, MAX_HS_M, SAND_TOTAL, SAND_SS )
 
- pc_wave_sand <- left_join(pc_wave_merge, sand_tran, by = c("WAVE_YR" = "YEAR", "SITE" = "SITE", "TRANSECT" = "TRANSECT"))
- not_in_merged_sand <- pc_wave_merge %>% filter(!SITE %in% pc_wave_sand$SITE)
- 
+epi_sessile_invert <- as.data.frame(epi_sessile_invert)
+endo_sessile_invert <- as.data.frame(endo_sessile_invert)
+understory_algae <- as.data.frame(understory_algae)
+giant_kelp <- as.data.frame(giant_kelp)
 
- epi_sessile_invert <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, TRANSECT, `EPILITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
- endo_sessile_invert <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, TRANSECT, `ENDOLITHIC SESSILE INVERT`, MAX_HS_M, SAND_TOTAL, SAND_SS )
- understory_algae <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, TRANSECT, `UNDERSTORY ALGAE`, MAX_HS_M, SAND_TOTAL, SAND_SS )
- giant_kelp <- pc_wave_sand %>% dplyr::select(SITE, WAVE_YR, TRANSECT, `GIANT KELP`, MAX_HS_M, SAND_TOTAL, SAND_SS )
-
-
- epi_sessile_invert <- as.data.frame(epi_sessile_invert)
- endo_sessile_invert <- as.data.frame(endo_sessile_invert)
- understory_algae <- as.data.frame(understory_algae)
- giant_kelp <- as.data.frame(giant_kelp)
-
-
-pdf(file = "./Wavekelpthesis/Code/LTER data/Percent cover/11-14-24_pctrans_simplelm.pdf", paper = "us")
+pdf(file = "./Wavekelpthesis/Code/LTER data/Percent cover/11-14-24_pcsite_simplelm.pdf", paper = "us")
 lr_func <- function(pc_subset){
-  pc_subset_lin_reg <- lm(data= pc_subset,formula = pc_subset[,4]~pc_subset$MAX_HS_M)
-  pc_subset_lin_reg_plot <- plot(y= pc_subset[,4],x=pc_subset$MAX_HS_M,type="p", xlab = "Max wave height (m)", ylab = "percent cover (%)", main =  glue("Max winter wave height vs \n{colnames(pc_subset[4])} percent cover \n TRANSECT"))
+  pc_subset_lin_reg <- lm(data= pc_subset,formula = pc_subset[,3]~pc_subset$MAX_HS_M)
+  pc_subset_lin_reg_plot <- plot(y= pc_subset[,3],x=pc_subset$MAX_HS_M,type="p", xlab = "Max wave height (m)", ylab = "pc per site/year (g)", main =  glue("Max winter wave height vs \n{colnames(pc_subset[3])} percent cover SITE"))
   pc_subset_prt_intercept <- coef(summary(pc_subset_lin_reg))[1,'t value']
   pc_subset_prt_waves <- coef(summary(pc_subset_lin_reg))[2,'t value']
   pc_subset_rsquared <- summary(pc_subset_lin_reg)$r.squared
   pc_subset_fvalue <- summary(pc_subset_lin_reg)$fstatistic[1]
   pc_subset_pvalue <- pf(summary(pc_subset_lin_reg)$fstatistic[1],summary(pc_subset_lin_reg)$fstatistic[2],summary(pc_subset_lin_reg)$fstatistic[3],lower.tail = FALSE)
   abline(pc_subset_lin_reg$coefficients[1],pc_subset_lin_reg$coefficients[2], col = "red")
-  text(x = 4.9, y = max(pc_subset[4])-(max(pc_subset[4])*0.2), label = glue("Pr(>|t|) = {round(pc_subset_prt_intercept,digits = 6)} (intercept) \nPr(>|t|) = {round(pc_subset_prt_waves,digits = 6)} (waves) \nr-squared = {round(pc_subset_rsquared,digits = 6)} \nF-value = {round(pc_subset_fvalue,digits = 6)} \np-value = {round(pc_subset_pvalue,digits = 6)}"), cex = 0.5, pos = 2)
+  text(x = 4.9, y = max(pc_subset[3])-(max(pc_subset[3])*0.2), label = glue("Pr(>|t|) = {round(pc_subset_prt_intercept,digits = 6)} (intercept) \nPr(>|t|) = {round(pc_subset_prt_waves,digits = 6)} (waves) \nr-squared = {round(pc_subset_rsquared,digits = 6)} \nF-value = {round(pc_subset_fvalue,digits = 6)} \np-value = {round(pc_subset_pvalue,digits = 6)}"), cex = 0.5, pos = 2)
   return(pc_subset_lin_reg_plot)
 }
-
+dev.off()
 
 lr_func(epi_sessile_invert)
 lr_func(endo_sessile_invert)
 lr_func(understory_algae)
 lr_func(giant_kelp)
 
-
-dev.off()
-
-#only sand
-sink("./Wavekelpthesis/Code/LTER data/Percent cover/11-17-24_pctrans_glmmtmb.txt")
-epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M+epi_sessile_invert$SAND_TOTAL+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert)
+sink("./Wavekelpthesis/Code/LTER data/Percent cover/11-15-24_pcsite_glmmtmb.txt")
+epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M  + epi_sessile_invert$SAND_TOTAL+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert )
 print(summary(epi_sessile_invert_glmmTMB))
-endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M+endo_sessile_invert$SAND_TOTAL+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"))
+
+endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M + endo_sessile_invert$SAND_TOTAL+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"), data = endo_sessile_invert )
 print(summary(endo_sessile_invert_glmmTMB))
-understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M+understory_algae$SAND_TOTAL+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"))
+
+understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M + understory_algae$SAND_TOTAL+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"), data = understory_algae)
 print(summary(understory_algae_glmmTMB))
-giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M+giant_kelp$SAND_TOTAL+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"))
+
+giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M + giant_kelp$SAND_TOTAL+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"), data = giant_kelp )
 print(summary(giant_kelp_glmmTMB))
 sink()
 
-
-#sand + shallow sand
-sink("./Wavekelpthesis/Code/LTER data/Percent cover/11-17-24_pctrans_glmmtmb_ss.txt")
-epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M+epi_sessile_invert$SAND_SS+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert)
+#shallow sand + sand
+sink("./Wavekelpthesis/Code/LTER data/Percent cover/11-15-24_pcsite_glmmtmb_ss.txt")
+epi_sessile_invert_glmmTMB <- glmmTMB(epi_sessile_invert$`EPILITHIC SESSILE INVERT`~epi_sessile_invert$MAX_HS_M  + epi_sessile_invert$SAND_SS+ ar1(as.factor(epi_sessile_invert$WAVE_YR)+0|epi_sessile_invert$SITE),family = Gamma(link = "log"), data = epi_sessile_invert )
 print(summary(epi_sessile_invert_glmmTMB))
-endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M+endo_sessile_invert$SAND_SS+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"))
+
+endo_sessile_invert_glmmTMB <- glmmTMB(endo_sessile_invert$`ENDOLITHIC SESSILE INVERT`~endo_sessile_invert$MAX_HS_M + endo_sessile_invert$SAND_SS+ ar1(as.factor(endo_sessile_invert$WAVE_YR)+0|endo_sessile_invert$SITE),family = Gamma(link = "log"), data = endo_sessile_invert )
 print(summary(endo_sessile_invert_glmmTMB))
-understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M+understory_algae$SAND_SS+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"))
+
+understory_algae_glmmTMB <- glmmTMB(understory_algae$`UNDERSTORY ALGAE`~understory_algae$MAX_HS_M + understory_algae$SAND_SS+ ar1(as.factor(understory_algae$WAVE_YR)+0|understory_algae$SITE),family = Gamma(link = "log"), data = understory_algae)
 print(summary(understory_algae_glmmTMB))
-giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M+giant_kelp$SAND_SS+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"))
+
+giant_kelp_glmmTMB <- glmmTMB(giant_kelp$`GIANT KELP`~giant_kelp$MAX_HS_M + giant_kelp$SAND_SS+ ar1(as.factor(giant_kelp$WAVE_YR)+0|giant_kelp$SITE),family = Gamma(link = "log"), data = giant_kelp )
 print(summary(giant_kelp_glmmTMB))
 sink()
-

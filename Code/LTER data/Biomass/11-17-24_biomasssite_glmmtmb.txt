@@ -1,0 +1,155 @@
+ Family: Gamma  ( log )
+Formula:          
+mobile_invert$`MOBILE INVERT` ~ mobile_invert$MAX_HS_M + mobile_invert$SAND_TOTAL +  
+    ar1(as.factor(mobile_invert$WAVE_YR) + 0 | mobile_invert$SITE)
+Data: mobile_invert
+
+     AIC      BIC   logLik deviance df.resid 
+  1705.5   1725.9   -846.8   1693.5      213 
+
+Random effects:
+
+Conditional model:
+ Groups             Name                                 Variance Std.Dev. Corr      
+ mobile_invert$SITE as.factor(mobile_invert$WAVE_YR)2000 1.727    1.314    0.94 (ar1)
+Number of obs: 219, groups:  mobile_invert$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.458 
+
+Conditional model:
+                          Estimate Std. Error z value Pr(>|z|)    
+(Intercept)               3.408897   0.413810   8.238   <2e-16 ***
+mobile_invert$MAX_HS_M   -0.148920   0.094618  -1.574   0.1155    
+mobile_invert$SAND_TOTAL -0.013398   0.005218  -2.568   0.0102 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          
+epi_sessile_invert$`EPILITHIC SESSILE INVERT` ~ epi_sessile_invert$MAX_HS_M +  
+    epi_sessile_invert$SAND_TOTAL + ar1(as.factor(epi_sessile_invert$WAVE_YR) +  
+    0 | epi_sessile_invert$SITE)
+Data: epi_sessile_invert
+
+     AIC      BIC   logLik deviance df.resid 
+  1324.5   1344.8   -656.2   1312.5      213 
+
+Random effects:
+
+Conditional model:
+ Groups                  Name                                      Variance Std.Dev.
+ epi_sessile_invert$SITE as.factor(epi_sessile_invert$WAVE_YR)2000 0.719    0.848   
+ Corr      
+ 0.94 (ar1)
+Number of obs: 219, groups:  epi_sessile_invert$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.312 
+
+Conditional model:
+                              Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                    2.30408    0.28686   8.032 9.59e-16 ***
+epi_sessile_invert$MAX_HS_M    0.01129    0.07304   0.155   0.8771    
+epi_sessile_invert$SAND_TOTAL -0.01158    0.00393  -2.947   0.0032 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          
+endo_sessile_invert$`ENDOLITHIC SESSILE INVERT` ~ endo_sessile_invert$MAX_HS_M +  
+    endo_sessile_invert$SAND_TOTAL + ar1(as.factor(endo_sessile_invert$WAVE_YR) +  
+    0 | endo_sessile_invert$SITE)
+Data: endo_sessile_invert
+
+     AIC      BIC   logLik deviance df.resid 
+  1449.0   1469.3   -718.5   1437.0      213 
+
+Random effects:
+
+Conditional model:
+ Groups                   Name                                       Variance Std.Dev.
+ endo_sessile_invert$SITE as.factor(endo_sessile_invert$WAVE_YR)2000 26.82    5.179   
+ Corr      
+ 0.99 (ar1)
+Number of obs: 219, groups:  endo_sessile_invert$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.946 
+
+Conditional model:
+                                Estimate Std. Error z value Pr(>|z|)
+(Intercept)                     2.261379   1.712715   1.320    0.187
+endo_sessile_invert$MAX_HS_M   -0.135236   0.128705  -1.051    0.293
+endo_sessile_invert$SAND_TOTAL -0.004308   0.007757  -0.555    0.579
+ Family: Gamma  ( log )
+Formula:          understory_algae$`UNDERSTORY ALGAE` ~ understory_algae$MAX_HS_M +  
+    understory_algae$SAND_TOTAL + ar1(as.factor(understory_algae$WAVE_YR) +  
+    0 | understory_algae$SITE)
+Data: understory_algae
+
+     AIC      BIC   logLik deviance df.resid 
+  2111.4   2131.8  -1049.7   2099.4      213 
+
+Random effects:
+
+Conditional model:
+ Groups                Name                                    Variance Std.Dev.
+ understory_algae$SITE as.factor(understory_algae$WAVE_YR)2000 0.2818   0.5309  
+ Corr      
+ 0.98 (ar1)
+Number of obs: 219, groups:  understory_algae$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.46 
+
+Conditional model:
+                             Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                  3.770936   0.247357  15.245  < 2e-16 ***
+understory_algae$MAX_HS_M    0.186603   0.079106   2.359 0.018329 *  
+understory_algae$SAND_TOTAL -0.011827   0.003487  -3.392 0.000695 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          giant_kelp$`GIANT KELP` ~ giant_kelp$MAX_HS_M + giant_kelp$SAND_TOTAL +  
+    ar1(as.factor(giant_kelp$WAVE_YR) + 0 | giant_kelp$SITE)
+Data: giant_kelp
+
+     AIC      BIC   logLik deviance df.resid 
+  2326.8   2347.1  -1157.4   2314.8      213 
+
+Random effects:
+
+Conditional model:
+ Groups          Name                              Variance Std.Dev. Corr      
+ giant_kelp$SITE as.factor(giant_kelp$WAVE_YR)2000 0.00993  0.09965  0.98 (ar1)
+Number of obs: 219, groups:  giant_kelp$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 1.58 
+
+Conditional model:
+                       Estimate Std. Error z value Pr(>|z|)    
+(Intercept)            5.208841   0.310922  16.753  < 2e-16 ***
+giant_kelp$MAX_HS_M   -0.200118   0.127814  -1.566    0.117    
+giant_kelp$SAND_TOTAL -0.016426   0.003282  -5.005  5.6e-07 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          
+fish$FISH ~ fish$MAX_HS_M + fish$SAND_TOTAL + ar1(as.factor(fish$WAVE_YR) +  
+    0 | fish$SITE)
+Data: fish
+
+     AIC      BIC   logLik deviance df.resid 
+  1122.3   1142.6   -555.1   1110.3      213 
+
+Random effects:
+
+Conditional model:
+ Groups    Name                        Variance Std.Dev. Corr      
+ fish$SITE as.factor(fish$WAVE_YR)2000 0.5991   0.774    0.95 (ar1)
+Number of obs: 219, groups:  fish$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.666 
+
+Conditional model:
+                Estimate Std. Error z value Pr(>|z|)    
+(Intercept)      1.70660    0.32312   5.282 1.28e-07 ***
+fish$MAX_HS_M    0.03459    0.10408   0.332    0.740    
+fish$SAND_TOTAL -0.01001    0.00506  -1.977    0.048 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

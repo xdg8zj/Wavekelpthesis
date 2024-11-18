@@ -1,0 +1,104 @@
+ Family: Gamma  ( log )
+Formula:          
+epi_sessile_invert$`EPILITHIC SESSILE INVERT` ~ epi_sessile_invert$MAX_HS_M +  
+    epi_sessile_invert$SAND_TOTAL + ar1(as.factor(epi_sessile_invert$WAVE_YR) +  
+    0 | epi_sessile_invert$SITE)
+Data: epi_sessile_invert
+
+     AIC      BIC   logLik deviance df.resid 
+  7652.1   7681.1  -3820.0   7640.1      922 
+
+Random effects:
+
+Conditional model:
+ Groups                  Name                                      Variance Std.Dev.
+ epi_sessile_invert$SITE as.factor(epi_sessile_invert$WAVE_YR)2000 0.2724   0.5219  
+ Corr      
+ 0.97 (ar1)
+Number of obs: 928, groups:  epi_sessile_invert$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 1.27 
+
+Conditional model:
+                               Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                    3.559203   0.204507  17.404  < 2e-16 ***
+epi_sessile_invert$MAX_HS_M   -0.099732   0.060836  -1.639    0.101    
+epi_sessile_invert$SAND_TOTAL -0.015302   0.002261  -6.768 1.31e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          
+endo_sessile_invert$`ENDOLITHIC SESSILE INVERT` ~ endo_sessile_invert$MAX_HS_M +  
+    endo_sessile_invert$SAND_TOTAL + ar1(as.factor(endo_sessile_invert$WAVE_YR) +  
+    0 | endo_sessile_invert$SITE)
+
+     AIC      BIC   logLik deviance df.resid 
+ -2272.5  -2243.5   1142.3  -2284.5      922 
+
+Random effects:
+
+Conditional model:
+ Groups                   Name                                       Variance Std.Dev.
+ endo_sessile_invert$SITE as.factor(endo_sessile_invert$WAVE_YR)2000 14.61    3.823   
+ Corr      
+ 1.00 (ar1)
+Number of obs: 928, groups:  endo_sessile_invert$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 4.86 
+
+Conditional model:
+                                Estimate Std. Error z value Pr(>|z|)  
+(Intercept)                    -1.072882   1.304199  -0.823   0.4107  
+endo_sessile_invert$MAX_HS_M   -0.095953   0.116543  -0.823   0.4103  
+endo_sessile_invert$SAND_TOTAL -0.011941   0.005045  -2.367   0.0179 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          understory_algae$`UNDERSTORY ALGAE` ~ understory_algae$MAX_HS_M +  
+    understory_algae$SAND_TOTAL + ar1(as.factor(understory_algae$WAVE_YR) +  
+    0 | understory_algae$SITE)
+
+     AIC      BIC   logLik deviance df.resid 
+  9324.1   9353.1  -4656.1   9312.1      922 
+
+Random effects:
+
+Conditional model:
+ Groups                Name                                    Variance Std.Dev.
+ understory_algae$SITE as.factor(understory_algae$WAVE_YR)2000 0.228    0.4775  
+ Corr      
+ 0.95 (ar1)
+Number of obs: 928, groups:  understory_algae$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 0.763 
+
+Conditional model:
+                             Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                  3.918071   0.170698  22.953  < 2e-16 ***
+understory_algae$MAX_HS_M    0.119208   0.050348   2.368   0.0179 *  
+understory_algae$SAND_TOTAL -0.011102   0.001706  -6.507 7.68e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+ Family: Gamma  ( log )
+Formula:          giant_kelp$`GIANT KELP` ~ giant_kelp$MAX_HS_M + giant_kelp$SAND_TOTAL +  
+    ar1(as.factor(giant_kelp$WAVE_YR) + 0 | giant_kelp$SITE)
+
+     AIC      BIC   logLik deviance df.resid 
+  2022.9   2051.9  -1005.5   2010.9      922 
+
+Random effects:
+
+Conditional model:
+ Groups          Name                              Variance Std.Dev. Corr      
+ giant_kelp$SITE as.factor(giant_kelp$WAVE_YR)2000 0.1606   0.4008   1.00 (ar1)
+Number of obs: 928, groups:  giant_kelp$SITE, 9
+
+Dispersion estimate for Gamma family (sigma^2): 4.21 
+
+Conditional model:
+                       Estimate Std. Error z value Pr(>|z|)    
+(Intercept)            1.883320   0.263382   7.151 8.64e-13 ***
+giant_kelp$MAX_HS_M   -0.019540   0.100347  -0.195    0.846    
+giant_kelp$SAND_TOTAL -0.017288   0.003632  -4.761 1.93e-06 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
